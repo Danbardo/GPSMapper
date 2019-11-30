@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+
+<head>
+<title>GPS Mapper</title>
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="description" content=".">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script>
+var mq={lat:-33.77532379591104,lng:151.11246407032013};
+var marker,map;
+var polys;
+var ms=[];
+function map() {
+	if($(window).height()>$(window).width()){
+		$('#map').height(Math.ceil($(window).width()));
+	}else{
+		$('#map').height(Math.ceil($(window).height()*0.7));
+	}
+	var coords={lat: Number(mq.lat), lng: Number(mq.lng)};
+	var mapCanvas = document.getElementById('map');
+	map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 18,
+	disableDefaultUI: true,
+    center: coords,
+	mapTypeId: 'hybrid',
+	zoomControl: true,
+	mapTypeControl:true
+	});
+
+	map.addListener('click', function(e) {
+		if(typeof polys!=="undefined"){
+			polys.setMap(null);
+		}
+		placeMarkerAndPanTo(e.latLng, map);
+	});
+
+
+}
+function placeMarkerAndPanTo(latLng, map) {
+	var pts = $('#points').find('tbody');
+	var id=pts.find('tr').length+1;
+	var lt,lg;
+	if(typeof latLng.add==="boolean"){
+		lt=latLng.lat;
+		lg=latLng.lng;
+	}else{
+		lt=latLng.lat();
+		lg=latLng.lng();
+	}
+
+	pts.append('<tr><td>'+id+'</td><td>'+lt+'</td><td>'+lg+'</td></tr>');
+
+	// Get all lines
+	var pts = $('#points').find('tbody tr');
+	var lines = [];
+	pts.each(function(i,e){
+		var td = $(e).find('td');
+		lines.push({lat:Number(td[1].innerHTML),lng:Number(td[2].innerHTML)});
+	});
+	polys = new google.maps.Polyline({
+		path: lines,
+		geodesic: true,
+		strokeColor: '#FF0000',
+		strokeOpacity: 1.0,
+		strokeWeight: 2
+	});
+	polys.setMap(map);
+}
+function addLine(lt,lg){
+	placeMarkerAndPanTo({lat:lt,lng:lg,add:true},map);
+}
+function undo(){
+	var id= $('#points').find('tbody tr').last().find('td').first().html();
+	$('#points').find('tbody tr').last().remove();
+	var pts = $('#points').find('tbody tr');
+	var lines = [];
+	pts.each(function(i,e){
+		var td = $(e).find('td');
+		lines.push({lat:Number(td[1].innerHTML),lng:Number(td[2].innerHTML)});
+	});
+	polys.setMap(null);
+	polys = new google.maps.Polyline({
+		path: lines,
+		geodesic: true,
+		strokeColor: '#FF0000',
+		strokeOpacity: 1.0,
+		strokeWeight: 2
+	});
+	polys.setMap(map);
+}
+function KeyPress(e) {
+      var evtobj = window.event? event : e
+      if (evtobj.keyCode == 90 && evtobj.ctrlKey) undo();
+}
+
+document.onkeydown = KeyPress;
+</script>
+<script src="https://maps.google.com/maps/api/js?key=ENTER_API_KEY"></script>
+</head>
+
+<body>
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+
+    <main class="mdl-layout__content">
+        <div class="page-content">
+
+        	<div class="mdl-grid mdl-shadow--2dp">
+            	<div class="mdl-cell mdl-cell--12-col">
+                	<h4>Select a location</h4>
+                    <p>
+
+                    </p>
+                </div>
+            	<div class="mdl-cell mdl-cell--12-col">
+                    <p>
+                    	Note: If the map did not load, please refresh the page.
+                    </p>
+                    <div id="map"></div>
+                </div>
+                <div class="mdl-cell mdl-cell--12-col">
+                	<table id="points">
+                    	<thead>
+                            <tr>
+                                <td>ID</td>
+                                <td>Lat</td>
+                                <td>Lng</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script>
+	$(document).ready(function(){
+		map();
+	});
+</script>
+</body>
+</html>
